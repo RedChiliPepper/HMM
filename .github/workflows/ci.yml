@@ -1,0 +1,38 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  test-and-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: ">=3.9"
+      
+      - name: Install dependencies
+        run: |
+          pip install -e ".[all]"
+
+      - name: Build documentation
+        run: |
+          mkdir -p docs/_templates/empty
+          bash shell/update_docs.sh
+          # Verify built files exist
+          [ -f docs/build/html/index.html ] || exit 1
+      
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: docs/build/html
+          retention-days: 5
+      
+      - name: Run tests
+        run: |
+          pytest tests/ --cov=src --cov-report=xml
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3

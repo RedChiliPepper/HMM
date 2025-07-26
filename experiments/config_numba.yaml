@@ -1,0 +1,30 @@
+# Base configuration
+base:
+  attractor: "Lorenz"
+  save_data: true
+  file_format: ".npy"
+  burn_in: 2
+  gibbs_iterations: 5
+  random_seed: 42
+
+# Attractor-specific parameters
+Lorenz:
+  params: [28.0, 10.0, 8/3]  # rho, sigma, beta
+  n: 1e4
+  x0: [0.1, 0.1, 0.1]
+  h: 0.01
+  rtol: 1e-13
+  atol: 1e-100
+  method: 'DOP853'
+
+# Analysis configuration
+analysis:
+  K: 4        # Number of latent states
+  N: 3
+  backend: "numba"
+  plot_type: "trajectory" # "vector_field" or "trajectory"
+  normalize: true
+  colors: "tab10"
+  linewidth: 0.1
+  show_fixed_point: true
+  projection_3d: false
