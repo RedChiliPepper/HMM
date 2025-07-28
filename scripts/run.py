@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+from typing import Union
 import argparse
 
 project_root = Path(__file__).parent.parent
@@ -14,16 +15,27 @@ from attractor_analysis.profiling_compile import *
 from attractor_analysis.analysis import SLDSAnalyzer
 
 
-def main(config_file):
-    # Load configuration
-    config_path = Path(get_project_root()) / "experiments" / str(config_file)
-    print(f"Looking for config at: {config_path}")  # Debug line
+def main(config_path: Path, data_path: Path = Path("data/")):
+    """Main analysis function.
+    
+    Args:
+        config_path: Absolute path to config file (required)
+        data_path: Path to data directory (defaults to 'data/')
+    """
+    # Convert to absolute path if relative
+    data_path = data_path.resolve() if not data_path.is_absolute() else data_path
+    # Verify config file exists
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found at: {config_path}")
     
-    # Pass the Path object directly
-    config = read_config(config_path)
+    # Read config
+    try:
+        config = read_config(config_path)
+    except Exception as e:
+        raise RuntimeError(f"Error reading config: {str(e)}") from e
 
+    print(f"Using config: {config_path}")
+    print(f"Using data directory: {data_path}")
     
     # Get base config and attractor-specific parameters
     base_config = config["base"]
@@ -39,6 +51,7 @@ def main(config_file):
         attractor=attractor,
         formatt=params["file_format"],
         save=params["save_data"],
+        data_path = data_path,
         **attractor_params
     ).T
 
@@ -164,22 +177,52 @@ def main(config_file):
 
 if __name__ == "__main__":
     # Set up argument parser
-    parser = argparse.ArgumentParser(description="Run attractor analysis with a given config file.")
+    parser = argparse.ArgumentParser(description="Run attractor analysis with a given config file and data path.")
     parser.add_argument(
-        '--config_file', 
+        '--config', 
         type=str, 
         required=True,
-        help="YAML config file located in experiments folder (e.g., config.yaml)"
+        help="Path to YAML config file (e.g., experiments/config.yaml)"
+    )
+    parser.add_argument(
+        '--data-path', 
+        type=str,
+        help='Override data directory path if provided'
     )
     
     args = parser.parse_args()
     
+    # Get absolute path to config file
+    config_path = Path(args.config).absolute()
+    print(f"Using config file: {config_path}")
     
     try:
-        main(args.config_file)
+        main(config_path)  # Pass the Path object directly
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+    
+    # Handle data path - command line argument overrides config file
+    if args.data_path:
+        data_path = Path(args.data_path)
+    elif 'data_path' in config:
+        data_path = Path(config['data_path'])
+    else:
+        data_path = Path('data/')  # Default fallback
+    
+    # Resolve to absolute path
+    if not data_path.is_absolute():
+        data_path = config_path.parent / data_path
+    data_path = data_path.resolve()
+    
+    print(f"Using data directory: {data_path}")
+    
+    try:
+        main(config_path, data_path)
     except FileNotFoundError as e:
         print(f"Error: {e}")
         sys.exit(1)
     except KeyError as e:
-        print(f"Error: Missing required config file parameter - {e}")
+        print(f"Error: Missing required config parameter - {e}")
         sys.exit(1)

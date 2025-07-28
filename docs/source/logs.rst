@@ -3,7 +3,7 @@ Logs Directory
 
 Log Structure
 ------------
-.. tree::
+.. toctree::
    :glob:
    
    ../../logs/*

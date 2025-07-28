@@ -6,13 +6,9 @@ import os
 import reservoirpy.datasets as rsvp_d
 import matplotlib
 import matplotlib.pyplot as plt
-from typing import Optional
+from typing import Optional, Union
 from pathlib import Path
 from .profiling_compile import *
-
-
-def get_project_root() -> Path:
-    return Path(__file__).parent.parent.parent
 
 
 def coordinate_choice(attractor, xxn, yyn, zzn):
@@ -30,14 +26,14 @@ def coordinate_choice(attractor, xxn, yyn, zzn):
     Raises:
         ValueError: If attractor type is invalid
     """
-    match attractor:
-        case "Lorenz":
+    #match attractor:
+    if attractor=="Lorenz":
             return xxn
-        case "Rossler":
+    elif attractor=="Rossler":
             return zzn
-        case "DoubleScroll" | "MultiScroll" | "RabinovichFabrikant":
+    elif (attractor=="DoubleScroll") | (attractor=="MultiScroll") | (attractor=="RabinovichFabrikant"):
             return xxn  # or choose appropriate coordinate for each
-        case _:
+    else:
             raise ValueError(f"Unknown attractor type: {attractor}. Must be one of: 'Lorenz', 'Rossler', 'DoubleScroll', 'MultiScroll', 'RabinovichFabrikant'")
 
 
@@ -139,39 +135,35 @@ def Plot3D(xs, ys, zs, title, start, pt_number, lw = 1, figsize = (15, 5)):
     plt.tight_layout()
     plt.show()
 
-"""
-def get_data_path(filename=""):
-    # Get absolute path to data directory (sibling of src folder)
-    root = get_project_root()
-    os.makedirs(os.path.join(root, 'data'), exist_ok=True)
-    return os.path.join(os.path.join(root, 'data'), filename)
-"""
-
-def get_data_path(filename=""):
-    """Get path compliant with Python packaging standards"""
-    # Try standard package data location first
-    installed_path = Path(sys.prefix) / 'share' / 'attractor_analysis' / 'data' / filename
-    if installed_path.exists():
-        return str(installed_path)
-    
-    # Fallback to development location
-    dev_path = get_project_root() / 'data' / filename
-    dev_path.parent.mkdir(exist_ok=True)
-    return str(dev_path)
-
 @profile_to_logs(log_dir="logs/line_profiles")
-def loader(attractor, formatt, save, **kwargs):
+def loader(
+    attractor: str,
+    formatt: str,
+    save: bool,
+    data_path: Union[str, Path, None] = None,
+    **kwargs
+) -> np.ndarray:
     """Load or generate attractor data with default parameters for all attractor types.
     
     Args:
         attractor: Type of attractor ("Lorenz", "Rossler", "DoubleScroll", etc.)
         formatt: File format (".npy" or ".csv")
         save: Whether to save the generated data
+        data_path: Path to data directory (str, Path, or None for default)
         **kwargs: Optional parameters to override defaults
         
     Returns:
         numpy.ndarray: Array containing the attractor data
     """
+    # Handle default path
+    data_dir = Path(data_path) if data_path is not None else Path("data/")
+    
+    # Ensure directory exists
+    data_dir.mkdir(parents=True, exist_ok=True)
+    data_dir = data_dir.resolve()  # Convert to absolute path
+    
+    print(f"Using data directory: {data_dir}")  # Optional debug
+
     # Default parameters for all attractors
     defaults = {
         "n": 1e4,          # Number of points
@@ -238,44 +230,44 @@ def loader(attractor, formatt, save, **kwargs):
 
     
     # Generate filename based on parameters
-    match attractor:
-        case "Lorenz":
+    #match attractor:
+    if attractor=="Lorenz" :
             name = "Lorenz_rho_%s_sigma_%s_beta_%s_x_%s_y_%s_z_%s_h_%s_method_%s_rtol_%s_atol_%s_n_%s" % (
                 params["params"][0], params["params"][1], params["params"][2],
                 params["x0"][0], params["x0"][1], params["x0"][2],
                 params["h"], params["method"], params["rtol"], params["atol"], params["n"])
-        case "Rossler":
+    elif attractor=="Rossler":
             name = "Rossler_a_%s_b_%s_c_%s_x_%s_y_%s_z_%s_h_%s_method_%s_rtol_%s_atol_%s_n_%s" % (
                 params["a"], params["b"], params["c"],
                 params["x0"][0], params["x0"][1], params["x0"][2],
                 params["h"], params["method"], params["rtol"], params["atol"], params["n"])
-        case "DoubleScroll":
+    elif attractor=="DoubleScroll":
             name = "DoubleScroll_r1_%s_r2_%s_r4_%s_ir_%s_beta_%s_x_%s_y_%s_z_%s_h_%s_n_%s" % (
                 params["r1"], params["r2"], params["r4"],
                 params["ir"], params["beta"],
                 params["x0"][0], params["x0"][1], params["x0"][2],
                 params["h"], params["n"])
-        case "MultiScroll":
+    elif attractor=="MultiScroll":
             name = "MultiScroll_a_%s_b_%s_c_%s_x_%s_y_%s_z_%s_h_%s_n_%s" % (
                 params["a_ms"], params["b_ms"], params["c_ms"],
                 params["x0"][0], params["x0"][1], params["x0"][2],
                 params["h"], params["n"])
-        case "RabinovichFabrikant":
+    elif attractor=="RabinovichFabrikant":
             name = "RabinovichFabrikant_alpha_%s_gamma_%s_x_%s_y_%s_z_%s_h_%s_n_%s" % (
                 params["alpha"], params["gamma"],
                 params["x0"][0], params["x0"][1], params["x0"][2],
                 params["h"], params["n"])
     
-    # Get full path to data file
-    filepath = get_data_path(name + formatt)
-    print("filename:\t", filepath)
+    # Build full file path using the provided data_path
+    filepath = data_dir / f"{name}{formatt}"
+    print(f"Data file path: {filepath}")
     
     if not os.path.exists(filepath):
         print('file not found, proceeding with computation')
         t1 = time.time()
         
-        match attractor:
-            case "Lorenz":
+        #match attractor:
+        if attractor=="Lorenz":
                 print(f"\nDEBUG - Parameters before lorenz call:")
                 print(f"rho type: {type(params['params'][0])}, value: {params['params'][0]}")
                 print(f"sigma type: {type(params['params'][1])}, value: {params['params'][1]}")
@@ -294,7 +286,7 @@ def loader(attractor, formatt, save, **kwargs):
                     rtol=params["rtol"], 
                     atol=np.ones(3)*params["atol"]
                 )
-            case "Rossler":
+        elif attractor=="Rossler":
                 dataset = rsvp_d.rossler(
                     params["n"], 
                     a=params["a"], 
@@ -306,7 +298,7 @@ def loader(attractor, formatt, save, **kwargs):
                     rtol=params["rtol"], 
                     atol=params["atol"]
                 )
-            case "DoubleScroll":
+        elif attractor=="DoubleScroll":
                 dataset = rsvp_d.doublescroll(
                     params["n"],
                     r1=params["r1"],
@@ -317,7 +309,7 @@ def loader(attractor, formatt, save, **kwargs):
                     x0=params["x0"],
                     h=params["h"]
                 )
-            case "MultiScroll":
+        elif attractor=="MultiScroll":
                 dataset = rsvp_d.multiscroll(
                     params["n"],
                     a=params["a_ms"],
@@ -326,7 +318,7 @@ def loader(attractor, formatt, save, **kwargs):
                     x0=params["x0"],
                     h=params["h"]
                 )
-            case "RabinovichFabrikant":
+        elif attractor== "RabinovichFabrikant":
                 dataset = rsvp_d.rabinovich_fabrikant(
                     params["n"],
                     alpha=params["alpha"],
@@ -340,18 +332,18 @@ def loader(attractor, formatt, save, **kwargs):
         dataset = np.array(dataset).T
         
         if save:
-            match formatt:
-                case ".npy":
+            #match formatt:
+            if formatt==".npy":
                     np.save(filepath, dataset)
-                case ".csv":
+            elif formatt== ".csv":
                     np.savetxt(filepath, dataset, delimiter=",")
             print("file saved")
     else:
         print("file correctly loaded")
-        match formatt:
-            case ".npy":
+        #match formatt:
+        if formatt==".npy":
                 dataset = np.load(filepath)
-            case ".csv":
+        elif formatt==".csv":
                 dataset = np.loadtxt(filepath)
     
     return dataset

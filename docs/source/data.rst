@@ -3,7 +3,7 @@ Data Directory
 
 File Structure
 -------------
-.. tree::
+.. toctree::
    :glob:
    
    ../../data/*

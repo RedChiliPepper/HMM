@@ -8,7 +8,7 @@ name = "attractor_analysis"
 version = "0.0.1"
 description = "devtools_scicomp"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 license = { file = "LICENSE" }
 authors = [{ name = "E B", email = "winnfieldj@yahoo.com" }]
 dynamic = ["dependencies"]
