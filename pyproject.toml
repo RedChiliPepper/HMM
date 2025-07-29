@@ -8,7 +8,7 @@ name = "attractor_analysis"
 version = "0.0.1"
 description = "devtools_scicomp"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [{ name = "E B", email = "winnfieldj@yahoo.com" }]
 dynamic = ["dependencies"]
@@ -27,17 +27,17 @@ test = [
     "codecov"
 ]
 docs = [
-    "sphinx>=6.0",
-    "sphinx-rtd-theme>=1.0",
-    "myst-parser>=1.0",
-    "sphinx-autoapi>=2.0"
+    "sphinx>=5.0",
+    "sphinx-rtd-theme",
+    "myst-parser",
+    "sphinx-autoapi"
 ]
 all = [
     "pytest",
     "pytest-cov",
     "codecov",
-    "sphinx>=6.0",
-    "sphinx-rtd-theme>=1.0",
-    "myst-parser>=1.0",
-    "sphinx-autoapi>=2.0"
+    "sphinx>=5.0",
+    "sphinx-rtd-theme",
+    "myst-parser",
+    "sphinx-autoapi"
 ]

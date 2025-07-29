@@ -42,13 +42,17 @@ def message_passing_optimized(M: np.ndarray,
                 Q_j = Q[j]
                 x = y[t] - np.dot(A_hat[j], y_hat)
                 
+                """
                 # Cholesky decomposition
                 try:
                     L = np.linalg.cholesky(Q_j)
                 except:
                     # Handle non-positive definite matrices
                     L = np.linalg.cholesky(Q_j + 1e-6 * np.eye(N))
+                """
                 
+                L = np.linalg.cholesky(Q_j + 1e-6 * np.eye(N))
+
                 # Solve L*y = x
                 sol = np.linalg.solve(L, x)
                 
@@ -89,12 +93,14 @@ def message_passing_optimized(M: np.ndarray,
             Q_k = Q[k]
             x = y[t] - np.dot(A_hat[k], y_hat)
             
+            """
             # Manual MVN computation as before
             try:
                 L = np.linalg.cholesky(Q_k)
             except:
                 L = np.linalg.cholesky(Q_k + 1e-6 * np.eye(N))
-            
+            """
+            L = np.linalg.cholesky(Q_k + 1e-6 * np.eye(N))
             sol = np.linalg.solve(L, x)
             quad_form = np.dot(sol, sol)
             logdet = 2.0 * np.sum(np.log(np.diag(L)))
