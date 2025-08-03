@@ -6,6 +6,7 @@ import os
 import reservoirpy.datasets as rsvp_d
 import matplotlib
 import matplotlib.pyplot as plt
+import inspect
 from typing import Optional, Union
 from pathlib import Path
 from .profiling_compile import *
@@ -156,7 +157,16 @@ def loader(
         numpy.ndarray: Array containing the attractor data
     """
     # Handle default path
-    data_dir = Path(data_path) if data_path is not None else Path("data/")
+    if data_path is None:
+        # Try to infer project root from caller's file path
+        caller_frame = inspect.stack()[1]
+        caller_path = Path(caller_frame.filename).parent
+        if caller_path.name == "experiments":
+            data_dir = caller_path.parent / "data"
+        else:
+            data_dir = Path("data/")
+    else:
+        data_dir = Path(data_path)
     
     # Ensure directory exists
     data_dir.mkdir(parents=True, exist_ok=True)

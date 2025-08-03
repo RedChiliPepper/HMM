@@ -15,15 +15,14 @@ from attractor_analysis.profiling_compile import *
 from attractor_analysis.analysis import SLDSAnalyzer
 
 
-def main(config_path: Path, data_path: Path = Path("data/")):
-    """Main analysis function.
+def main(config_path: Path, data_path: Optional[Path] = None):
+    """Run attractor analysis with given config and data paths.
     
     Args:
-        config_path: Absolute path to config file (required)
-        data_path: Path to data directory (defaults to 'data/')
+        config_path: Path to the YAML config file (e.g., experiments/config.yaml)
+        data_path: Optional path to data directory. If None, defaults to ../data/
+                  (sister directory of the experiments folder)
     """
-    # Convert to absolute path if relative
-    data_path = data_path.resolve() if not data_path.is_absolute() else data_path
     # Verify config file exists
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found at: {config_path}")
@@ -33,6 +32,12 @@ def main(config_path: Path, data_path: Path = Path("data/")):
         config = read_config(config_path)
     except Exception as e:
         raise RuntimeError(f"Error reading config: {str(e)}") from e
+
+    # If data_path not provided, set it to ../data/ relative to experiments folder
+    if data_path is None:
+        experiments_dir = config_path.parent
+        project_root = experiments_dir.parent
+        data_path = project_root / "data"
 
     print(f"Using config: {config_path}")
     print(f"Using data directory: {data_path}")
@@ -196,12 +201,16 @@ if __name__ == "__main__":
     config_path = Path(args.config).absolute()
     print(f"Using config file: {config_path}")
     
+    # Load config file first
     try:
-        main(config_path)  # Pass the Path object directly
-    except FileNotFoundError as e:
-        print(f"Error: {e}")
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        print(f"Error: Config file not found at {config_path}")
         sys.exit(1)
-
+    except yaml.YAMLError as e:
+        print(f"Error: Invalid YAML in config file - {e}")
+        sys.exit(1)
     
     # Handle data path - command line argument overrides config file
     if args.data_path:
@@ -209,12 +218,16 @@ if __name__ == "__main__":
     elif 'data_path' in config:
         data_path = Path(config['data_path'])
     else:
-        data_path = Path('data/')  # Default fallback
+        experiments_dir = config_path.parent
+        project_root = experiments_dir.parent
+        data_path = project_root / 'data'
     
     # Resolve to absolute path
     if not data_path.is_absolute():
         data_path = config_path.parent / data_path
     data_path = data_path.resolve()
+
+    data_path.mkdir(parents=True, exist_ok=True)
     
     print(f"Using data directory: {data_path}")
     
